@@ -2,116 +2,130 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LuminaLog | Orchestrator Dashboard</title>
     <style>
         :root {
-            --bg: #f3f4f6;
+            --bg: #f8fafc;
             --card-bg: #ffffff;
-            --primary: #2563eb;
-            --success: #10b981;
+            --primary: #3b82f6;
+            --success: #22c55e;
             --warning: #f59e0b;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
+            --error: #ef4444;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
         }
 
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text-main); margin: 0; padding: 40px; }
-        h1 { text-align: center; font-weight: 800; letter-spacing: -1px; margin-bottom: 40px; }
-        
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text-main); margin: 0; padding: 40px; }
+        h1 { text-align: center; font-size: 2.5rem; font-weight: 800; margin-bottom: 40px; color: var(--text-main); }
+        h1 span { color: var(--primary); }
+
         .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1400px; margin: 0 auto; }
-        .column { background: rgba(229, 231, 235, 0.5); border-radius: 12px; padding: 20px; min-height: 70vh; }
-        .column h2 { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 20px; display: flex; justify-content: space-between; }
+        .column { background: #f1f5f9; border-radius: 16px; padding: 20px; min-height: 80vh; border: 1px solid var(--border); }
+        .column h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
         
-        .card { background: var(--card-bg); border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; }
-        .card-header { font-weight: 700; margin-bottom: 4px; display: flex; justify-content: space-between; }
-        .repo-link { font-size: 0.8rem; color: var(--primary); text-decoration: none; display: block; margin-bottom: 15px; overflow: hidden; text-overflow: ellipsis; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border); position: relative; overflow: hidden; }
+        .card-header { font-weight: 800; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .repo-url { font-size: 0.8rem; color: var(--primary); text-decoration: none; word-break: break-all; margin-bottom: 12px; display: block; }
 
-        /* Vertical Stages Timeline */
-        .stages-list { position: relative; padding-left: 30px; margin-top: 15px; }
-        .stages-list::before { content: ''; position: absolute; left: 10px; top: 5px; bottom: 5px; width: 2px; background: #e5e7eb; }
+        /* Badges */
+        .badge { font-size: 0.7rem; padding: 4px 10px; border-radius: 20px; font-weight: 600; text-transform: uppercase; background: #e2e8f0; }
+        .lang-badge { background: #dbeafe; color: #1e40af; }
+        .worker-info { font-size: 0.75rem; color: var(--text-muted); margin: 10px 0; padding: 6px 10px; background: #f8fafc; border-radius: 6px; border: 1px dashed var(--border); }
 
-        .stage-item { position: relative; margin-bottom: 12px; font-size: 0.9rem; display: flex; align-items: center; }
-        .stage-dot { position: absolute; left: -25px; width: 12px; height: 12px; border-radius: 50%; background: #d1d5db; border: 2px solid white; z-index: 1; }
+        /* Vertical Timeline */
+        .stages-list { position: relative; padding-left: 24px; margin-top: 15px; }
+        .stages-list::before { content: ''; position: absolute; left: 6px; top: 5px; bottom: 5px; width: 2px; background: var(--border); }
+
+        .stage-item { position: relative; margin-bottom: 15px; font-size: 0.85rem; display: flex; align-items: center; gap: 10px; }
+        .stage-dot { position: absolute; left: -22px; width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; border: 2px solid white; z-index: 2; transition: all 0.3s ease; }
         
-        /* Status Colors */
+        /* State Styles */
         .stage-item.Running .stage-dot { background: var(--warning); box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2); animation: pulse 1.5s infinite; }
         .stage-item.Success .stage-dot { background: var(--success); }
-        .stage-item.Success { color: var(--success); font-weight: 500; }
-        .stage-item.Running { font-weight: 700; color: var(--text-main); }
-        .stage-item.Pending { color: var(--text-muted); }
+        .stage-item.Success { color: var(--success); font-weight: 600; }
+        .stage-item.Running { font-weight: 800; color: var(--text-main); }
 
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
         
-        .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; background: #eee; }
+        .count-pill { background: var(--text-main); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; }
     </style>
 </head>
 <body>
 
-    <h1>LuminaLog <span style="color:var(--primary)">Orchestrator</span></h1>
+    <h1>LuminaLog <span>Orchestrator</span></h1>
     
     <div class="dashboard">
         <div class="column">
-            <h2>Queued <span id="q-count" class="badge">0</span></h2>
+            <h2>Queued <span id="q-count" class="count-pill">0</span></h2>
             <div id="queued"></div>
         </div>
 
         <div class="column">
-            <h2>In Progress <span id="ip-count" class="badge">0</span></h2>
+            <h2>In Progress <span id="ip-count" class="count-pill">0</span></h2>
             <div id="in-progress"></div>
         </div>
 
         <div class="column">
-            <h2>Completed <span id="c-count" class="badge">0</span></h2>
+            <h2>Completed <span id="c-count" class="count-pill">0</span></h2>
             <div id="completed"></div>
         </div>
     </div>
 
     <script>
-        async function refresh() {
-            const res = await fetch('http://127.0.0.1:8000/api/v1/dashboard');
-            const data = await res.json();
+        async function updateUI() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/v1/dashboard');
+                const data = await response.json();
 
-            // Helper to count items
-            document.getElementById('q-count').innerText = data.queued.length;
-            document.getElementById('ip-count').innerText = data.in_progress.length;
-            document.getElementById('c-count').innerText = data.completed.length;
+                document.getElementById('q-count').innerText = data.queued.length;
+                document.getElementById('ip-count').innerText = data.in_progress.length;
+                document.getElementById('c-count').innerText = data.completed.length;
 
-            // Render Queued
-            document.getElementById('queued').innerHTML = data.queued.map(j => `
-                <div class="card">
-                    <div class="card-header">Build #${j.id}</div>
-                    <div class="repo-link">${j.repo_url}</div>
-                    <div style="font-size:0.8rem; color:gray italic">Waiting for allocation...</div>
-                </div>
-            `).join('');
-
-            // Render In-Progress (Vertical Timeline)
-            document.getElementById('in-progress').innerHTML = data.in_progress.map(j => `
-                <div class="card" style="border-top: 4px solid var(--primary)">
-                    <div class="card-header">Build #${j.id} <span>🔄</span></div>
-                    <div class="repo-link">${j.repo}</div>
-                    <div class="stages-list">
-                        ${j.stages.map(s => `
-                            <div class="stage-item ${s.status}">
-                                <div class="stage-dot"></div>
-                                ${s.name} <span style="margin-left:auto; font-size:0.7rem; opacity:0.6">${s.status}</span>
-                            </div>
-                        `).join('')}
+                // 1. Render Queued
+                document.getElementById('queued').innerHTML = data.queued.map(j => `
+                    <div class="card">
+                        <div class="card-header">Build #${j.id} <span class="badge lang-badge">${j.language}</span></div>
+                        <div class="repo-url">${j.repo_url}</div>
+                        <div style="font-size: 0.75rem; color: orange;">⌛ Waiting for worker...</div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
 
-            // Render Completed
-            document.getElementById('completed').innerHTML = data.completed.map(j => `
-                <div class="card" style="border-top: 4px solid var(--success)">
-                    <div class="card-header">Build #${j.id} <span>✅</span></div>
-                    <div class="repo-link">${j.repo_url}</div>
-                    <div style="font-size:0.8rem; color:var(--success)">Finished Successfully</div>
-                </div>
-            `).join('');
+                // 2. Render In-Progress (The Vertical Timeline)
+                document.getElementById('in-progress').innerHTML = data.in_progress.map(j => `
+                    <div class="card" style="border-left: 4px solid var(--primary)">
+                        <div class="card-header">Build #${j.id} <span class="badge lang-badge">${j.lang}</span></div>
+                        <div class="repo-url">${j.repo}</div>
+                        <div class="worker-info">🏗️ Assigned to: <b>${j.worker}</b></div>
+                        <div class="stages-list">
+                            ${j.stages.map(s => `
+                                <div class="stage-item ${s.status}">
+                                    <div class="stage-dot"></div>
+                                    <span>${s.name}</span>
+                                    <span style="margin-left: auto; font-size: 0.7rem; opacity: 0.5;">${s.status}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+
+                // 3. Render Completed
+                document.getElementById('completed').innerHTML = data.completed.map(j => `
+                    <div class="card" style="border-left: 4px solid ${j.status === 'Completed' ? 'var(--success)' : 'var(--error)'}">
+                        <div class="card-header">Build #${j.id} <span>${j.status === 'Completed' ? '✅' : '❌'}</span></div>
+                        <div class="repo-url">${j.repo_url}</div>
+                        <div class="badge" style="margin-top:10px; display:inline-block">${j.status}</div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error("Dashboard Sync Error:", err);
+            }
         }
 
-        setInterval(refresh, 2000);
-        refresh();
+        setInterval(updateUI, 2000);
+        updateUI();
     </script>
 </body>
 </html>

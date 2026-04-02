@@ -1,0 +1,13 @@
+# Ignore temporary build folders
+temp_builds/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore environment variables if you have any
+.env
+
+# Ignore OS specific files
+.DS_Store
+Thumbs.db
